@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Filtres</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; background: #f9f9f9; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Filtres Admin</h1>
+    
+    <div class="test">
+        <h2>Test 1: Date sans commandes</h2>
+        <button onclick="testDateFilter('2025-12-15')">Tester 15/12/2025 (future)</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 2: Date avec commandes</h2>
+        <button onclick="testDateFilter('2025-12-13')">Tester 13/12/2025 (avec commandes)</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 3: Statut inexistant</h2>
+        <button onclick="testStatutFilter('inexistant')">Tester statut inexistant</button>
+        <div id="test3-result"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 4: Toutes les commandes</h2>
+        <button onclick="testAllOrders()">Charger toutes les commandes</button>
+        <div id="test4-result"></div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://192.168.11.105:3000/api';
+        
+        async function testDateFilter(date) {
+            const resultId = date === '2025-12-15' ? 'test1-result' : 'test2-result';
+            
+            try {
+                const url = `${API_URL}/admin/orders?dateFrom=${date}`;
+                console.log('🔍 Test URL:', url);
+                
+                const response = await fetch(url);
+                const orders = await response.json();
+                
+                document.getElementById(resultId).innerHTML = `
+                    <div class="result ${orders.length === 0 ? 'success' : 'error'}">
+                        <strong>Résultat pour ${date}:</strong><br>
+                        URL: ${url}<br>
+                        Commandes trouvées: ${orders.length}<br>
+                        ${orders.length === 0 ? 
+                            '✅ Correct: Aucune commande (attendu pour date future)' : 
+                            `❌ Problème: ${orders.length} commandes trouvées`
+                        }
+                        ${orders.length > 0 ? '<br>Détails: ' + orders.map(o => `#${o.id} (${o.date_commande})`).join(', ') : ''}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById(resultId).innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testStatutFilter(statut) {
+            try {
+                const url = `${API_URL}/admin/orders?statut=${statut}`;
+                console.log('🔍 Test URL:', url);
+                
+                const response = await fetch(url);
+                const orders = await response.json();
+                
+                document.getElementById('test3-result').innerHTML = `
+                    <div class="result ${orders.length === 0 ? 'success' : 'error'}">
+                        <strong>Résultat pour statut "${statut}":</strong><br>
+                        URL: ${url}<br>
+                        Commandes trouvées: ${orders.length}<br>
+                        ${orders.length === 0 ? 
+                            '✅ Correct: Aucune commande avec ce statut' : 
+                            `❌ Problème: ${orders.length} commandes trouvées`
+                        }
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('test3-result').innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testAllOrders() {
+            try {
+                const url = `${API_URL}/admin/orders`;
+                console.log('🔍 Test URL:', url);
+                
+                const response = await fetch(url);
+                const orders = await response.json();
+                
+                document.getElementById('test4-result').innerHTML = `
+                    <div class="result success">
+                        <strong>Toutes les commandes:</strong><br>
+                        URL: ${url}<br>
+                        Total: ${orders.length} commandes<br>
+                        <details>
+                            <summary>Voir détails</summary>
+                            ${orders.map(o => `
+                                #${o.id} - ${new Date(o.date_commande).toLocaleDateString('fr-FR')} - ${o.statut} - ${o.nom}
+                            `).join('<br>')}
+                        </details>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('test4-result').innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

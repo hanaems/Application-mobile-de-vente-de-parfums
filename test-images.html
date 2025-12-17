@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Images Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .image-test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        img { max-width: 200px; border: 2px solid #6a4c93; }
+    </style>
+</head>
+<body>
+    <h1>Test des Images Admin</h1>
+    
+    <div class="image-test">
+        <h3>Test Image 1 - URL complète</h3>
+        <img src="http://192.168.11.105:3000/uploads/image-1765652068897-223095043.jpg" 
+             onerror="console.error('Erreur image 1'); this.style.border='2px solid red';"
+             onload="console.log('Image 1 chargée avec succès');">
+    </div>
+    
+    <div class="image-test">
+        <h3>Test Image 2 - URL relative</h3>
+        <img src="/uploads/image-1765651923228-481684854.jpg" 
+             onerror="console.error('Erreur image 2'); this.style.border='2px solid red';"
+             onload="console.log('Image 2 chargée avec succès');">
+    </div>
+    
+    <div class="image-test">
+        <h3>Test API Parfums</h3>
+        <div id="parfums-container">Chargement...</div>
+    </div>
+    
+    <script>
+        // Test de l'API parfums
+        fetch('http://192.168.11.105:3000/api/parfums')
+            .then(res => res.json())
+            .then(parfums => {
+                const container = document.getElementById('parfums-container');
+                const first3 = parfums.slice(0, 3);
+                
+                container.innerHTML = first3.map(parfum => `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #eee;">
+                        <h4>${parfum.nom} - ${parfum.marque}</h4>
+                        <p>Image URL: ${parfum.image_url}</p>
+                        ${parfum.image_url ? `
+                            <img src="http://192.168.11.105:3000${parfum.image_url}" 
+                                 style="width: 100px; height: 100px; object-fit: cover;"
+                                 onerror="console.error('Erreur image parfum ${parfum.id}'); this.style.border='2px solid red';"
+                                 onload="console.log('Image parfum ${parfum.id} chargée');">
+                        ` : '<p>Pas d\'image</p>'}
+                    </div>
+                `).join('');
+            })
+            .catch(err => {
+                console.error('Erreur API:', err);
+                document.getElementById('parfums-container').innerHTML = 'Erreur de chargement';
+            });
+    </script>
+</body>
+</html>

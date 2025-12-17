@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test DOM Elements</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Éléments DOM Admin</h1>
+    
+    <div class="test">
+        <h2>Simulation du problème</h2>
+        <p>Ce test simule le problème de timing des éléments DOM dans l'interface admin.</p>
+        
+        <button onclick="simulateAdminRender()">Simuler render() admin</button>
+        <button onclick="checkElements()">Vérifier éléments</button>
+        <button onclick="simulateApplyFilters()">Simuler applyOrderFilters()</button>
+        
+        <div id="admin-container"></div>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Solution avec requestAnimationFrame</h2>
+        <button onclick="testWithRequestAnimationFrame()">Tester avec requestAnimationFrame</button>
+        <div id="raf-results"></div>
+    </div>
+    
+    <script>
+        function simulateAdminRender() {
+            const container = document.getElementById('admin-container');
+            
+            // Simuler le contenu des filtres comme dans l'admin
+            container.innerHTML = `
+                <div class="filters-container">
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label>📅 Date de début:</label>
+                            <input type="date" id="filterDateFrom">
+                        </div>
+                        <div class="filter-group">
+                            <label>📅 Date de fin:</label>
+                            <input type="date" id="filterDateTo">
+                        </div>
+                        <div class="filter-group">
+                            <label>📊 Statut:</label>
+                            <select id="filterStatut">
+                                <option value="all">Tous les statuts</option>
+                                <option value="confirmee">✅ Confirmée</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button onclick="simulateApplyFilters()">Appliquer</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('test-results').innerHTML = `
+                <div class="success">✅ Contenu rendu avec innerHTML</div>
+            `;
+        }
+        
+        function checkElements() {
+            const dateFrom = document.getElementById('filterDateFrom');
+            const dateTo = document.getElementById('filterDateTo');
+            const statut = document.getElementById('filterStatut');
+            
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="${dateFrom && dateTo && statut ? 'success' : 'error'}">
+                    Éléments trouvés:<br>
+                    - filterDateFrom: ${dateFrom ? '✅ OK' : '❌ MANQUANT'}<br>
+                    - filterDateTo: ${dateTo ? '✅ OK' : '❌ MANQUANT'}<br>
+                    - filterStatut: ${statut ? '✅ OK' : '❌ MANQUANT'}
+                </div>
+            `;
+        }
+        
+        function simulateApplyFilters() {
+            const dateFrom = document.getElementById('filterDateFrom');
+            const dateTo = document.getElementById('filterDateTo');
+            const statut = document.getElementById('filterStatut');
+            
+            const results = document.getElementById('test-results');
+            
+            if (!dateFrom || !dateTo || !statut) {
+                results.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur: Cannot read properties of null (reading 'value')<br>
+                        C'est exactement le problème que vous rencontrez !
+                    </div>
+                `;
+            } else {
+                results.innerHTML = `
+                    <div class="success">
+                        ✅ Filtres appliqués avec succès !<br>
+                        Date From: ${dateFrom.value || 'vide'}<br>
+                        Date To: ${dateTo.value || 'vide'}<br>
+                        Statut: ${statut.value}
+                    </div>
+                `;
+            }
+        }
+        
+        function testWithRequestAnimationFrame() {
+            const container = document.getElementById('admin-container');
+            
+            // Vider d'abord
+            container.innerHTML = '';
+            
+            // Rendre le contenu
+            container.innerHTML = `
+                <div class="filters-container">
+                    <input type="date" id="filterDateFrom2" value="2025-12-15">
+                    <select id="filterStatut2">
+                        <option value="confirmee">Confirmée</option>
+                    </select>
+                    <button onclick="testRAFApply()">Test Apply</button>
+                </div>
+            `;
+            
+            // Utiliser requestAnimationFrame comme dans la correction
+            requestAnimationFrame(() => {
+                const dateFrom = document.getElementById('filterDateFrom2');
+                const statut = document.getElementById('filterStatut2');
+                
+                const results = document.getElementById('raf-results');
+                
+                if (dateFrom && statut) {
+                    results.innerHTML = `
+                        <div class="success">
+                            ✅ Avec requestAnimationFrame, les éléments sont trouvés !<br>
+                            Date: ${dateFrom.value}<br>
+                            Statut: ${statut.value}
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="error">
+                            ❌ Même avec requestAnimationFrame, éléments non trouvés
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function testRAFApply() {
+            const dateFrom = document.getElementById('filterDateFrom2');
+            const statut = document.getElementById('filterStatut2');
+            
+            if (dateFrom && statut) {
+                alert(`✅ Filtres appliqués !\nDate: ${dateFrom.value}\nStatut: ${statut.value}`);
+            } else {
+                alert('❌ Erreur: Éléments non trouvés');
+            }
+        }
+    </script>
+</body>
+</html>

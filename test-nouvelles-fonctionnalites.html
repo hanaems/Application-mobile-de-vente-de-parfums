@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Nouvelles Fonctionnalités</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test des Nouvelles Fonctionnalités</h1>
+    
+    <div class="section">
+        <h2>🗑️ Test Annulation de Commandes</h2>
+        <p class="info">Test de l'API d'annulation de commandes côté utilisateur</p>
+        
+        <div>
+            <h3>Commandes disponibles pour test :</h3>
+            <div id="commandes-test">Chargement...</div>
+        </div>
+        
+        <div>
+            <h3>Tests d'annulation :</h3>
+            <button onclick="testCancelOrder(4, 7, 'confirmee')">Tester annulation commande #4 (confirmée)</button>
+            <button onclick="testCancelOrder(6, 7, 'en_cours')">Tester annulation commande #6 (en cours - doit échouer)</button>
+            <div id="cancel-results"></div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🔍 Test Filtrage des Commandes Admin</h2>
+        <p class="info">Test des filtres par date et statut</p>
+        
+        <div>
+            <button onclick="testFilter('statut', 'confirmee')">Filtrer par statut "confirmée"</button>
+            <button onclick="testFilter('statut', 'en_cours')">Filtrer par statut "en cours"</button>
+            <button onclick="testFilter('date', '2025-12-13')">Filtrer par date du 13/12/2025</button>
+            <button onclick="testFilter('dateRange', '2025-12-12,2025-12-13')">Filtrer par plage de dates</button>
+            <div id="filter-results"></div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>📊 Résumé des Tests</h2>
+        <div id="test-summary">
+            <p>Lancez les tests ci-dessus pour voir les résultats</p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://192.168.11.105:3000/api';
+        let testResults = [];
+        
+        // Charger les commandes pour les tests
+        async function loadCommandesForTest() {
+            try {
+                const response = await fetch(`${API_URL}/admin/orders`);
+                const orders = await response.json();
+                
+                const container = document.getElementById('commandes-test');
+                container.innerHTML = orders.slice(0, 5).map(order => `
+                    <div class="test-result">
+                        <strong>Commande #${order.id}</strong> - 
+                        Statut: ${order.statut} - 
+                        Client: ${order.nom} - 
+                        Date: ${new Date(order.date_commande).toLocaleDateString('fr-FR')}
+                    </div>
+                `).join('');
+                
+                addTestResult('✅ Chargement des commandes', 'success');
+            } catch (error) {
+                document.getElementById('commandes-test').innerHTML = `<p class="error">Erreur: ${error.message}</p>`;
+                addTestResult('❌ Erreur chargement commandes', 'error');
+            }
+        }
+        
+        // Test d'annulation de commande
+        async function testCancelOrder(commandeId, userId, expectedStatut) {
+            try {
+                const response = await fetch(`${API_URL}/commandes/${userId}/${commandeId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                const container = document.getElementById('cancel-results');
+                
+                if (result.success) {
+                    container.innerHTML += `<div class="test-result success">✅ Commande #${commandeId} annulée avec succès</div>`;
+                    addTestResult(`Annulation commande #${commandeId}`, 'success');
+                } else {
+                    container.innerHTML += `<div class="test-result error">❌ Échec annulation #${commandeId}: ${result.message}</div>`;
+                    addTestResult(`Échec annulation #${commandeId} (attendu si statut != confirmée)`, 'info');
+                }
+            } catch (error) {
+                const container = document.getElementById('cancel-results');
+                container.innerHTML += `<div class="test-result error">❌ Erreur annulation #${commandeId}: ${error.message}</div>`;
+                addTestResult(`Erreur annulation #${commandeId}`, 'error');
+            }
+        }
+        
+        // Test de filtrage
+        async function testFilter(type, value) {
+            try {
+                let url = `${API_URL}/admin/orders`;
+                let params = new URLSearchParams();
+                let description = '';
+                
+                switch(type) {
+                    case 'statut':
+                        params.append('statut', value);
+                        description = `Filtre par statut: ${value}`;
+                        break;
+                    case 'date':
+                        params.append('dateFrom', value);
+                        description = `Filtre par date à partir du: ${value}`;
+                        break;
+                    case 'dateRange':
+                        const [dateFrom, dateTo] = value.split(',');
+                        params.append('dateFrom', dateFrom);
+                        params.append('dateTo', dateTo);
+                        description = `Filtre par plage: ${dateFrom} à ${dateTo}`;
+                        break;
+                }
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+                
+                const response = await fetch(url);
+                const orders = await response.json();
+                
+                const container = document.getElementById('filter-results');
+                container.innerHTML += `
+                    <div class="test-result success">
+                        <strong>✅ ${description}</strong><br>
+                        Résultats: ${orders.length} commande(s) trouvée(s)<br>
+                        URL: ${url}
+                    </div>
+                `;
+                
+                addTestResult(`Filtrage: ${description}`, 'success');
+                
+            } catch (error) {
+                const container = document.getElementById('filter-results');
+                container.innerHTML += `<div class="test-result error">❌ Erreur filtrage: ${error.message}</div>`;
+                addTestResult(`Erreur filtrage ${type}`, 'error');
+            }
+        }
+        
+        // Ajouter un résultat de test
+        function addTestResult(test, status) {
+            testResults.push({ test, status, time: new Date().toLocaleTimeString() });
+            updateSummary();
+        }
+        
+        // Mettre à jour le résumé
+        function updateSummary() {
+            const summary = document.getElementById('test-summary');
+            const successCount = testResults.filter(r => r.status === 'success').length;
+            const errorCount = testResults.filter(r => r.status === 'error').length;
+            const infoCount = testResults.filter(r => r.status === 'info').length;
+            
+            summary.innerHTML = `
+                <h3>Résultats des Tests</h3>
+                <p><span class="success">✅ Succès: ${successCount}</span></p>
+                <p><span class="error">❌ Erreurs: ${errorCount}</span></p>
+                <p><span class="info">ℹ️ Info: ${infoCount}</span></p>
+                <h4>Détail:</h4>
+                ${testResults.map(r => `
+                    <div class="${r.status}">${r.time} - ${r.test}</div>
+                `).join('')}
+            `;
+        }
+        
+        // Charger les commandes au démarrage
+        loadCommandesForTest();
+    </script>
+</body>
+</html>
