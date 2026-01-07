@@ -1,4 +1,4 @@
-const API_URL = 'http://20.30.1.59:3000/api';
+const API_URL = 'http://20.30.0.161:3000/api';
 
 // Admin App Component
 class AdminApp {

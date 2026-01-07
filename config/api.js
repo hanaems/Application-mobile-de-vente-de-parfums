@@ -2,8 +2,8 @@
 // Utiliser l'adresse IP WiFi pour téléphone physique
 export const API_CONFIG = {
   // Adresse IP WiFi de votre PC (pour téléphone physique)
-  BASE_URL: 'http://20.30.1.59:3000',
-  API_URL: 'http://20.30.1.59:3000/api'
+  BASE_URL: 'http://20.30.0.161:3000',
+  API_URL: 'http://20.30.0.161:3000/api'
 };
 
 // Fonction utilitaire pour construire les URLs d'images
